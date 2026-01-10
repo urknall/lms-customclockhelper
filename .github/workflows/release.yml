@@ -48,7 +48,7 @@ jobs:
         working-directory: ./gh-pages
         id: tag
         run: |
-          url="http://lms.hashsum.org"
+          url="https://urknall.github.io/lms-repo/"
           perl ../release.pl repo.xml ${{ steps.set-version.outputs.version }} CustomClockHelper_${{ steps.set-filename.outputs.fileversion }}.zip $url CustomClockHelper
 
       - name: Update lms-repo Repository
