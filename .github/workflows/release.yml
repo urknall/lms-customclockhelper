@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository Master
+        uses: actions/checkout@v4
+        with:
+           ref: master
+
+      - name: Checkout lms-repo gh-pages
+        uses: actions/checkout@v4
+        with:
+           repository: urknall/lms-repo
+           ref: gh-pages
+           path: gh-pages
+           token: ${{ secrets.LMS_REPO_TOKEN }}
+
+      - name: Set Version
+        id: set-version
+        run: |
+          cat VERSION >> $GITHUB_OUTPUT
+
+      - name: Set Filename Version
+        id: set-filename
+        run: |
+          FNAME=${{ steps.set-version.outputs.version }}
+          echo "fileversion=${FNAME//./_}" >>  $GITHUB_OUTPUT
+
+      - name: Zip Repository
+        id: zip
+        working-directory: ./src
+        run: |
+          zip ../CustomClockHelper -9r *
+          mv ../CustomClockHelper.zip ../CustomClockHelper_${{ steps.set-filename.outputs.fileversion }}.zip
+          cp ../CustomClockHelper*.zip ../gh-pages/
+
+      - name: Setup Perl
+        run: |
+          sudo apt-get install -y libxml-simple-perl libdigest-sha-perl
+
+      - name: Update SHA and Version in repo.xml
+        working-directory: ./gh-pages
+        id: tag
+        run: |
+          url="http://lms.hashsum.org"
+          perl ../release.pl repo.xml ${{ steps.set-version.outputs.version }} CustomClockHelper_${{ steps.set-filename.outputs.fileversion }}.zip $url CustomClockHelper
+
+      - name: Update lms-repo Repository
+        working-directory: ./gh-pages
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add repo.xml
+          git add CustomClockHelper_${{ steps.set-filename.outputs.fileversion }}.zip
+          git commit -m "Update CustomClockHelper for Release ${{ steps.set-version.outputs.version }}"
+          git push origin HEAD:gh-pages
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.set-version.outputs.version }}
+          name: Version ${{ steps.set-version.outputs.version }}
+          body: Custom Clock for Jivelite Release
+          draft: false
+          prerelease: false
+          files: CustomClockHelper_${{ steps.set-filename.outputs.fileversion }}.zip
