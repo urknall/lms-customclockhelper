@@ -81,7 +81,17 @@ sub saveHandler {
 	my $text = $params->{'text'};
 
 	if(defined($text) && $text ne "") {
-		my $style = JSON::XS::decode_json($text);
+		# Handle UTF-8 encoding properly for JSON::XS
+		# If the text has the UTF-8 flag set (Perl characters), use utf8(0) mode
+		# If it's UTF-8 bytes (no flag), use standard decode_json
+		my $style;
+		if (utf8::is_utf8($text)) {
+			# Text is already decoded to Perl characters, use utf8(0) mode
+			$style = JSON::XS->new->utf8(0)->decode($text);
+		} else {
+			# Text is UTF-8 bytes, use standard decode_json
+			$style = JSON::XS::decode_json($text);
+		}
 		if(defined($style)) {
 			my $modelsString = "";
 			my $models = $style->{'models'};
