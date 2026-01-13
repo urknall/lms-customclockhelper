@@ -69,7 +69,7 @@ jobs:
         with:
           tag_name: ${{ steps.set-version.outputs.version }}
           name: Version ${{ steps.set-version.outputs.version }}
-          body: Custom Clock for Jivelite Release
+          body: CustomClockHelper Release
           draft: false
           prerelease: false
           files: CustomClockHelper_${{ steps.set-filename.outputs.fileversion }}.zip
