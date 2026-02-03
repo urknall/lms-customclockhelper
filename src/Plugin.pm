@@ -400,7 +400,7 @@ sub getTitleFormats {
 		if(defined($value) && $value ne "") {
 			$titleFormatsHash->{$format} = $value;
 		}else {
-			$titleFormatsHash->{$format} = $value;
+			$titleFormatsHash->{$format} = "";
 		}
 	}
 
