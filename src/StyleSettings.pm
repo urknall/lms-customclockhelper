@@ -1012,7 +1012,7 @@ sub saveHandler {
 								$params->{'itemproperty_'.$propertyId} = "0x".$value."ff";
 							}elsif($value =~ /\d+/) {
 								$log->warn("Invalid color: $value");
-								$params->{'itemproperty_'.$propertyId} = ""
+								$params->{'itemproperty_'.$propertyId} = "";
 							}
 						}
 						$itemStyle->{$propertyId} = $params->{'itemproperty_'.$propertyId};
