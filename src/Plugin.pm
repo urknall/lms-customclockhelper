@@ -150,8 +150,8 @@ sub refreshNextProvider {
 			if( $@ ) {
 				$customItemProviders->{$id}->{refreshError} = 1;
 	    		$log->error("Error refreshing $id: $@");
-	    		my @empty = ();
-	    		addingCustomItems($id,\@empty);
+	    		my %empty = ();
+	    		addingCustomItems($id,\%empty);
 			}
 			
 		}
