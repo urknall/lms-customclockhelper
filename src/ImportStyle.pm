@@ -28,6 +28,7 @@ use Slim::Utils::Strings;
 
 use Data::Dumper;
 use JSON::XS;
+use Encode qw(encode_utf8);
 
 my $prefs = preferences('plugin.customclockhelper');
 my $log   = logger('plugin.customclockhelper');
@@ -81,17 +82,22 @@ sub saveHandler {
 	my $text = $params->{'text'};
 
 	if(defined($text) && $text ne "") {
-		# Handle UTF-8 encoding properly for JSON::XS
-		# If the text has the UTF-8 flag set (Perl characters), use utf8(0) mode
-		# If it's UTF-8 bytes (no flag), use standard decode_json
+		# Robust UTF-8 handling for JSON::XS
+		# Normalize input to UTF-8 bytes for consistent JSON decoding
+		# If text has the UTF-8 flag set (Perl internal characters), 
+		# encode it to UTF-8 bytes. Otherwise, assume it's already bytes.
+		my $text_bytes = utf8::is_utf8($text) ? encode_utf8($text) : $text;
+		
 		my $style;
-		if (utf8::is_utf8($text)) {
-			# Text is already decoded to Perl characters, use utf8(0) mode
-			$style = JSON::XS->new->utf8(0)->decode($text);
-		} else {
-			# Text is UTF-8 bytes, use standard decode_json
-			$style = JSON::XS::decode_json($text);
+		eval {
+			# Always use decode_json with UTF-8 bytes for consistent behavior
+			$style = JSON::XS::decode_json($text_bytes);
+		};
+		if ($@) {
+			$log->error("Failed to parse JSON style data: $@");
+			return undef;
 		}
+		
 		if(defined($style)) {
 			my $modelsString = "";
 			my $models = $style->{'models'};
