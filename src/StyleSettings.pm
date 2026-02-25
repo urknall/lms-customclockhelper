@@ -288,11 +288,8 @@ sub handler {
 	my @itemproperties = ();
 	if(defined($style) && defined($style->{'items'}) && $params->{'pluginCustomClockHelperStyleItemNo'}) {
 		my $items = $style->{'items'};
-		my $itemNo = $params->{'pluginCustomClockHelperStyleItemNo'};
-		# Bounds checking for array access
-		if($itemNo > 0 && $itemNo <= scalar(@$items)) {
-			my $currentItem = $items->[$itemNo-1];
-			my $itemtype = $currentItem->{'itemtype'} || "timetext";
+		my $currentItem = $items->[$params->{'pluginCustomClockHelperStyleItemNo'}-1];
+		my $itemtype = $currentItem->{'itemtype'} || "timetext";
 			for my $property (keys %$currentItem) {
 				if($currentItem->{$property} ne "" && isItemTypeParameter($itemtype,$property)) {
 					my %p = (
@@ -952,7 +949,6 @@ sub handler {
 			}
 		} @itemproperties;
 		$params->{'pluginCustomClockHelperStyleItemProperties'} = \@itemproperties;
-		}
 	}
 
 	if(defined($style)) {
@@ -989,44 +985,41 @@ sub saveHandler {
 		my $oldStyle = Plugins::CustomClockHelper::Plugin->getStyle($oldStyleName);
 		if($itemId && $itemId>0) {
 			my $items = $oldStyle->{'items'};
-			# Bounds checking for array operations
-			if($itemId <= scalar(@$items)) {
-				if($params->{'itemdelete'}) {
-					splice(@$items,$itemId-1,1);
-					$style = $oldStyle;
-					if(scalar(@$items)<$itemId) {
-						$params->{'pluginCustomClockHelperStyleItemNo'} = $itemId-1;
-					}
-				} else {
-					my $itemStyle = {};
-					foreach my $property (keys %$params) {
-						if($property =~ /^itemproperty_(.*)$/) {
-							my $propertyId = $1;
-							if($propertyId =~ /color$/) {
-								my $value = $params->{'itemproperty_'.$propertyId};
-								if($value =~ /^0x[0-9a-f]{2}[0-9a-f]{2}[0-9a-f]{2}$/i) {
-									# No transparency by default
-									$params->{'itemproperty_'.$propertyId} = $value."ff";
-								}elsif($value =~ /^0x[0-9a-f]{2}[0-9a-f]{2}[0-9a-f]{2}[0-9a-f]{2}$/i) {
-									# Do nothing we already have a valid hex value
-								}elsif($value =~ /^[0-9a-f]{2}[0-9a-f]{2}[0-9a-f]{2}[0-9a-f]{2}$/i) {
-									# add 0x prefix
-									$params->{'itemproperty_'.$propertyId} = "0x".$value;
-								}elsif($value =~ /^[0-9a-f]{2}[0-9a-f]{2}[0-9a-f]{2}$/i) {
-									# No transparency by default
-									# add 0x prefix
-									$params->{'itemproperty_'.$propertyId} = "0x".$value."ff";
-								}elsif($value =~ /\d+/) {
-									$log->warn("Invalid color: $value");
-									$params->{'itemproperty_'.$propertyId} = "";
-								}
-							}
-							$itemStyle->{$propertyId} = $params->{'itemproperty_'.$propertyId};
-						}
-					}
-					splice(@$items,$itemId-1,1,$itemStyle);
-					$style->{'items'} = $items;
+			if($params->{'itemdelete'}) {
+				splice(@$items,$itemId-1,1);
+				$style = $oldStyle;
+				if(scalar(@$items)<$itemId) {
+					$params->{'pluginCustomClockHelperStyleItemNo'} = $itemId-1;
 				}
+			} else {
+				my $itemStyle = {};
+				foreach my $property (keys %$params) {
+					if($property =~ /^itemproperty_(.*)$/) {
+						my $propertyId = $1;
+						if($propertyId =~ /color$/) {
+							my $value = $params->{'itemproperty_'.$propertyId};
+							if($value =~ /^0x[0-9a-f]{2}[0-9a-f]{2}[0-9a-f]{2}$/i) {
+								# No transparency by default
+								$params->{'itemproperty_'.$propertyId} = $value."ff";
+							}elsif($value =~ /^0x[0-9a-f]{2}[0-9a-f]{2}[0-9a-f]{2}[0-9a-f]{2}$/i) {
+								# Do nothing we already have a valid hex value
+							}elsif($value =~ /^[0-9a-f]{2}[0-9a-f]{2}[0-9a-f]{2}[0-9a-f]{2}$/i) {
+								# add 0x prefix
+								$params->{'itemproperty_'.$propertyId} = "0x".$value;
+							}elsif($value =~ /^[0-9a-f]{2}[0-9a-f]{2}[0-9a-f]{2}$/i) {
+								# No transparency by default
+								# add 0x prefix
+								$params->{'itemproperty_'.$propertyId} = "0x".$value."ff";
+							}elsif($value =~ /\d+/) {
+								$log->warn("Invalid color: $value");
+								$params->{'itemproperty_'.$propertyId} = "";
+							}
+						}
+						$itemStyle->{$propertyId} = $params->{'itemproperty_'.$propertyId};
+					}
+				}
+				splice(@$items,$itemId-1,1,$itemStyle);
+				$style->{'items'} = $items;
 			}
 		}else {
 			$style->{'items'} = $oldStyle->{'items'};
