@@ -703,7 +703,7 @@ sub handler {
 			}elsif($item->{'id'} =~ /^logotype$/ &&  ($itemtype eq 'sdtweathericon' || $itemtype eq 'sdticon')) {
 				$item->{'type'} = 'optionalsinglecombobox';
 				my @values = ();
-				push @values,{id=>'forecastIconURLSmall',name=>'Forcast icon'};				
+				push @values,{id=>'forecastIconURLSmall',name=>'Forecast icon'};				
 				$item->{'values'} = \@values;
 			}elsif($item->{'id'} =~ /^icontype$/ &&  $itemtype eq 'appleticon') {
 				$item->{'type'} = 'optionalsinglecombobox';
@@ -734,7 +734,7 @@ sub handler {
 					push @values,{id=>'%lowTemp.2',name=>'Lowest temperature tomorrow'};				
 					push @values,{id=>'%dayName.3',name=>'Weekday day after tomorrow'};				
 					push @values,{id=>'%highTemp.3',name=>'Highest temperature day after tomorrow'};				
-					push @values,{id=>'%lowTemp.4',name=>'Lowest temperature day after tomorrow'};				
+					push @values,{id=>'%lowTemp.3',name=>'Lowest temperature day after tomorrow'};				
 
 					push @values,{id=>'%scaletemp',name=>'Temperature scale C/F'};				
 				}elsif( defined($currentItem->{'texttype'}) && $currentItem->{'texttype'} eq 'texttime') {
@@ -901,8 +901,8 @@ sub handler {
 				push @values,{id=>'%Y-%m-%d',name=>'2010-04-15'};				
 				push @values,{id=>'%d1 %B',name=>'15 April'};				
 				push @values,{id=>'%B',name=>'April'};				
-				push @values,{id=>'%A %m1 %B',name=>'Wednesday 15 April'};				
-				push @values,{id=>'%a %m1 %b',name=>'Wed 15 Apr'};				
+				push @values,{id=>'%A %d1 %B',name=>'Wednesday 15 April'};				
+				push @values,{id=>'%a %d1 %b',name=>'Wed 15 Apr'};				
 				push @values,{id=>'%H:%M:%S',name=>'17:46:13'};				
 				$item->{'values'} = \@values;
 			}elsif($item->{'id'} eq 'text' && $itemtype eq 'timeicon') {
