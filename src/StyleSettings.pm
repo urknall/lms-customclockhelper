@@ -386,35 +386,59 @@ sub handler {
 				}
 				if($currentItem->{'period'} =~ /^d\d+/) {
 					push @values,{id=>'%_3',name=>'dx Weekday'};
+					push @values,{id=>'%!_3',name=>'dx Short Weekday'};
 					push @values,{id=>'%_4',name=>'dx Date'};
 					push @values,{id=>'%_5',name=>'dx High (F)'};
 					push @values,{id=>'%_6',name=>'dx High (C)'};
 					push @values,{id=>'%_7',name=>'dx Low (F)'};
 					push @values,{id=>'%_8',name=>'dx Low (C)'};
 					push @values,{id=>'%_9',name=>'dx Precip'};
+					push @values,{id=>'%!_9',name=>'dx Precip (raw)'};
 					push @values,{id=>'%_0',name=>'dx Condition'};
 					push @values,{id=>'%_Pg',name=>'dx Grass Pollen Category'};
+					push @values,{id=>'%!Pg',name=>'dx Grass Pollen Index'};
 					push @values,{id=>'%_Pt',name=>'dx Tree Pollen Category'};
+					push @values,{id=>'%!Pt',name=>'dx Tree Pollen Index'};
 					push @values,{id=>'%_Pr',name=>'dx Ragweed Pollen Category'};
-					push @values,{id=>'%_aqI',name=>'Air Quality Index'};
-					push @values,{id=>'%_aqC',name=>'Air Quality Category'};
-					push @values,{id=>'%_aqCI',name=>'Air Quality Category Index'};
-					push @values,{id=>'%_aqP',name=>'Air Quality Primary Pollutant'};
-					push @values,{id=>'%_aqMg',name=>'Air Quality General Message'};
-					push @values,{id=>'%_aqMs',name=>'Air Quality Sensitive Group Message'};
-					push @values,{id=>'%_COc',name=>'CO Category'};
-					push @values,{id=>'%_COm',name=>'CO Amount'};
-					push @values,{id=>'%_NOc',name=>'NO2 Category'};
-					push @values,{id=>'%_NOm',name=>'NO2 Amount'};
-					push @values,{id=>'%_O3c',name=>'O3 Category'};
-					push @values,{id=>'%_O3m',name=>'O3 Amount'};
-					push @values,{id=>'%_P1c',name=>'PM10 Category'};
-					push @values,{id=>'%_P1m',name=>'PM10 Amount'};
-					push @values,{id=>'%_P2c',name=>'PM2.5 Category'};
-					push @values,{id=>'%_P2m',name=>'PM2.5 Amount'};
-					push @values,{id=>'%_SOc',name=>'SO2 Category'};
-					push @values,{id=>'%_SOm',name=>'SO2 Amount'};
+					push @values,{id=>'%!Pr',name=>'dx Ragweed Pollen Index'};
 				}
+				# Air Quality macros (global – from SDT replaceMacros, not period-specific)
+				push @values,{id=>'%_aqI',name=>'Air Quality Index'};
+				push @values,{id=>'%_aqC',name=>'Air Quality Category'};
+				push @values,{id=>'%_aqCI',name=>'Air Quality Category Index'};
+				push @values,{id=>'%_aqP',name=>'Air Quality Primary Pollutant'};
+				push @values,{id=>'%_aqMg',name=>'Air Quality General Message'};
+				push @values,{id=>'%_aqMs',name=>'Air Quality Sensitive Group Message'};
+				push @values,{id=>'%_COn',name=>'CO Name'};
+				push @values,{id=>'%_COp',name=>'CO Phrase'};
+				push @values,{id=>'%_COm',name=>'CO Amount'};
+				push @values,{id=>'%_COc',name=>'CO Category'};
+				push @values,{id=>'%_COi',name=>'CO Category Index'};
+				push @values,{id=>'%_NOn',name=>'NO2 Name'};
+				push @values,{id=>'%_NOp',name=>'NO2 Phrase'};
+				push @values,{id=>'%_NOm',name=>'NO2 Amount'};
+				push @values,{id=>'%_NOc',name=>'NO2 Category'};
+				push @values,{id=>'%_NOi',name=>'NO2 Category Index'};
+				push @values,{id=>'%_O3n',name=>'O3 Name'};
+				push @values,{id=>'%_O3p',name=>'O3 Phrase'};
+				push @values,{id=>'%_O3m',name=>'O3 Amount'};
+				push @values,{id=>'%_O3c',name=>'O3 Category'};
+				push @values,{id=>'%_O3i',name=>'O3 Category Index'};
+				push @values,{id=>'%_P1n',name=>'PM10 Name'};
+				push @values,{id=>'%_P1p',name=>'PM10 Phrase'};
+				push @values,{id=>'%_P1m',name=>'PM10 Amount'};
+				push @values,{id=>'%_P1c',name=>'PM10 Category'};
+				push @values,{id=>'%_P1i',name=>'PM10 Category Index'};
+				push @values,{id=>'%_P2n',name=>'PM2.5 Name'};
+				push @values,{id=>'%_P2p',name=>'PM2.5 Phrase'};
+				push @values,{id=>'%_P2m',name=>'PM2.5 Amount'};
+				push @values,{id=>'%_P2c',name=>'PM2.5 Category'};
+				push @values,{id=>'%_P2i',name=>'PM2.5 Category Index'};
+				push @values,{id=>'%_SOn',name=>'SO2 Name'};
+				push @values,{id=>'%_SOp',name=>'SO2 Phrase'};
+				push @values,{id=>'%_SOm',name=>'SO2 Amount'};
+				push @values,{id=>'%_SOc',name=>'SO2 Category'};
+				push @values,{id=>'%_SOi',name=>'SO2 Category Index'};
 				$item->{'values'} = \@values;
 			}elsif($item->{'id'} eq 'sdtformat' &&  $itemtype =~ /^sdtsporttext/) {
 				$item->{'type'} = 'optionalsinglecombobox';
@@ -728,7 +752,7 @@ sub handler {
 				push @values,{id=>'grassICON',name=>'Grass pollen icon'};
 				push @values,{id=>'treeICON',name=>'Tree pollen icon'};
 				push @values,{id=>'ragweedICON',name=>'Ragweed pollen icon'};
-				if(!defined($currentItem->{'period'}) || $currentItem->{'period'} eq '-1') {
+				if(defined($currentItem->{'period'}) && $currentItem->{'period'} eq '-1') {
 					push @values,{id=>'aqCOicon',name=>'Air quality CO icon'};
 					push @values,{id=>'aqNO2icon',name=>'Air quality NO2 icon'};
 					push @values,{id=>'aqO3icon',name=>'Air quality O3 icon'};
