@@ -393,6 +393,27 @@ sub handler {
 					push @values,{id=>'%_8',name=>'dx Low (C)'};
 					push @values,{id=>'%_9',name=>'dx Precip'};
 					push @values,{id=>'%_0',name=>'dx Condition'};
+					push @values,{id=>'%_Pg',name=>'dx Grass Pollen Category'};
+					push @values,{id=>'%_Pt',name=>'dx Tree Pollen Category'};
+					push @values,{id=>'%_Pr',name=>'dx Ragweed Pollen Category'};
+					push @values,{id=>'%_aqI',name=>'Air Quality Index'};
+					push @values,{id=>'%_aqC',name=>'Air Quality Category'};
+					push @values,{id=>'%_aqCI',name=>'Air Quality Category Index'};
+					push @values,{id=>'%_aqP',name=>'Air Quality Primary Pollutant'};
+					push @values,{id=>'%_aqMg',name=>'Air Quality General Message'};
+					push @values,{id=>'%_aqMs',name=>'Air Quality Sensitive Group Message'};
+					push @values,{id=>'%_COc',name=>'CO Category'};
+					push @values,{id=>'%_COm',name=>'CO Amount'};
+					push @values,{id=>'%_NOc',name=>'NO2 Category'};
+					push @values,{id=>'%_NOm',name=>'NO2 Amount'};
+					push @values,{id=>'%_O3c',name=>'O3 Category'};
+					push @values,{id=>'%_O3m',name=>'O3 Amount'};
+					push @values,{id=>'%_P1c',name=>'PM10 Category'};
+					push @values,{id=>'%_P1m',name=>'PM10 Amount'};
+					push @values,{id=>'%_P2c',name=>'PM2.5 Category'};
+					push @values,{id=>'%_P2m',name=>'PM2.5 Amount'};
+					push @values,{id=>'%_SOc',name=>'SO2 Category'};
+					push @values,{id=>'%_SOm',name=>'SO2 Amount'};
 				}
 				$item->{'values'} = \@values;
 			}elsif($item->{'id'} eq 'sdtformat' &&  $itemtype =~ /^sdtsporttext/) {
@@ -703,7 +724,18 @@ sub handler {
 			}elsif($item->{'id'} =~ /^logotype$/ &&  ($itemtype eq 'sdtweathericon' || $itemtype eq 'sdticon')) {
 				$item->{'type'} = 'optionalsinglecombobox';
 				my @values = ();
-				push @values,{id=>'forecastIconURLSmall',name=>'Forecast icon'};				
+				push @values,{id=>'forecastIconURLSmall',name=>'Forecast icon'};
+				push @values,{id=>'grassICON',name=>'Grass pollen icon'};
+				push @values,{id=>'treeICON',name=>'Tree pollen icon'};
+				push @values,{id=>'ragweedICON',name=>'Ragweed pollen icon'};
+				if(!defined($currentItem->{'period'}) || $currentItem->{'period'} eq '-1') {
+					push @values,{id=>'aqCOicon',name=>'Air quality CO icon'};
+					push @values,{id=>'aqNO2icon',name=>'Air quality NO2 icon'};
+					push @values,{id=>'aqO3icon',name=>'Air quality O3 icon'};
+					push @values,{id=>'aqPM10icon',name=>'Air quality PM10 icon'};
+					push @values,{id=>'aqPM2.5icon',name=>'Air quality PM2.5 icon'};
+					push @values,{id=>'aqSO2icon',name=>'Air quality SO2 icon'};
+				}
 				$item->{'values'} = \@values;
 			}elsif($item->{'id'} =~ /^icontype$/ &&  $itemtype eq 'appleticon') {
 				$item->{'type'} = 'optionalsinglecombobox';
