@@ -84,8 +84,8 @@ sub pages {
 	}
 
 	my $songinfo = 0;
-	my $request = Slim::Control::Request::executeRequest(undef,['can','songinfoitems','?']);
-	my $result = $request->getResult("_can");
+	$request = Slim::Control::Request::executeRequest(undef,['can','songinfoitems','?']);
+	$result = $request->getResult("_can");
 	if($result) {
 		$songinfo = 1
 	}
