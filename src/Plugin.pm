@@ -160,8 +160,17 @@ sub refreshNextProvider {
 
 sub refreshCustomItems {
 	my $provider = shift;
+	if(ref($provider) && $provider->can('getParam')) {
+		$provider = $provider->getParam('provider');
+	}
 	$log->debug("Refreshing custom items: ".($provider?$provider:""));
 	Slim::Utils::Timers::killTimers(undef, \&refreshCustomItems); #Paranoia check
+	if(defined($provider) && $provider ne "" && !defined($customItemProviders->{$provider})) {
+		$log->warn("Unknown custom item provider: $provider");
+		my $interval = $prefs->get('customitemsrefreshinterval') || 300;
+		Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + ($interval), \&refreshCustomItems);
+		return;
+	}
 	if(scalar(keys %$customItemProviders)>0 && (!defined($provider) || $provider eq "" || defined($customItemProviders->{$provider}))) {
 		$log->debug("Preparing for refresh");
 		for my $id (keys %$customItemProviders) {
