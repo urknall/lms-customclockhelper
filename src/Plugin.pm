@@ -55,6 +55,8 @@ $prefs->migrate(1,sub {
 my $customItems = {};
 my $refreshCustomItems = undef;
 my $customItemProviders = {};
+my $refreshGeneration = 0;
+my $customItemRefreshTimeout = 60;
 
 $prefs->migrate(2, sub {
 	$prefs->set('customitemsstartuprefreshinterval', 60);
@@ -107,11 +109,21 @@ sub addCustomClockCustomItemProvider {
 sub addingCustomItems {
 	my $reference = shift;
 	my $items = shift;
+	my $generation = shift;
+	my $provider = $customItemProviders->{$reference};
+	if(!defined($refreshCustomItems) || !defined($provider) || !$provider->{refreshing} || (defined($generation) && $provider->{refreshGeneration} != $generation)) {
+		$log->warn("Ignoring stale custom item refresh result from $reference");
+		return;
+	}
+	if($provider->{refreshTimeoutCallback}) {
+		Slim::Utils::Timers::killTimers(undef, $provider->{refreshTimeoutCallback});
+		delete $provider->{refreshTimeoutCallback};
+	}
 	
 	$log->info("Got refresh answer from $reference with ".(scalar(keys %$items))." number of items");
 	$refreshCustomItems->{$reference} = $items;
-	delete $customItemProviders->{$reference}->{refreshing};
-	$customItemProviders->{$reference}->{refreshed} = 1;
+	delete $provider->{refreshing};
+	$provider->{refreshed} = 1;
 
 	my $lastProvider = 1;
 	for my $id (keys %$customItemProviders) {
@@ -144,14 +156,29 @@ sub refreshNextProvider {
 		if(defined($customItemProviders->{$id}->{refreshing}) && !$customItemProviders->{$id}->{refreshed}) {
 			$refreshInProgress = 1;
 			$log->info("Start refreshing $id");
+			my $providerId = $id;
+			my $generation = $customItemProviders->{$providerId}->{refreshGeneration};
+			my $completion = sub {
+				my ($reference, $items) = @_;
+				addingCustomItems($reference, $items, $generation);
+			};
+			my $timeoutCallback = sub {
+				return if !defined($customItemProviders->{$providerId}) || !$customItemProviders->{$providerId}->{refreshing};
+				$customItemProviders->{$providerId}->{refreshError} = 1;
+				$log->error("Timed out refreshing $providerId");
+				my %empty = ();
+				addingCustomItems($providerId, \%empty, $generation);
+			};
+			$customItemProviders->{$providerId}->{refreshTimeoutCallback} = $timeoutCallback;
+			Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + $customItemRefreshTimeout, $timeoutCallback);
 			eval { 
-				&{$customItemProviders->{$id}->{callback}}($id,\&addingCustomItems); 
+				&{$customItemProviders->{$id}->{callback}}($id,$completion); 
 			};
 			if( $@ ) {
 				$customItemProviders->{$id}->{refreshError} = 1;
 	    		$log->error("Error refreshing $id: $@");
 	    		my %empty = ();
-	    		addingCustomItems($id,\%empty);
+		    	addingCustomItems($id,\%empty,$generation);
 			}
 			
 		}
@@ -173,6 +200,9 @@ sub refreshCustomItems {
 	}
 	if(scalar(keys %$customItemProviders)>0 && (!defined($provider) || $provider eq "" || defined($customItemProviders->{$provider}))) {
 		$log->debug("Preparing for refresh");
+		if(!defined($refreshCustomItems)) {
+			$refreshGeneration++;
+		}
 		for my $id (keys %$customItemProviders) {
 			if((!defined($customItemProviders->{$id}->{refreshing}) || !$customItemProviders->{$id}->{refreshing}) && 
 				(!defined($provider) || $provider eq "" || $provider eq $id)) {
@@ -181,6 +211,7 @@ sub refreshCustomItems {
 
 				$customItemProviders->{$id}->{refreshing} = 1;
 				$customItemProviders->{$id}->{refreshed} = 0;
+				$customItemProviders->{$id}->{refreshGeneration} = $refreshGeneration;
 				delete $customItemProviders->{$id}->{refreshError};	
 			}
 		}	
