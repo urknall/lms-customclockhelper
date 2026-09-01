@@ -95,6 +95,7 @@ sub saveHandler {
 		};
 		if ($@) {
 			$log->error("Failed to parse JSON style data: $@");
+			$params->{'importError'} = Slim::Utils::Strings::string('SETUP_PLUGIN_CUSTOMCLOCKHELPER_SETTINGS_IMPORT_INVALID_JSON');
 			return undef;
 		}
 		
@@ -115,6 +116,9 @@ sub saveHandler {
 			return $style;	
 		}
 		$log->error("Invalid JSON style data: expected a named style with models and items arrays");
+		$params->{'importError'} = Slim::Utils::Strings::string('SETUP_PLUGIN_CUSTOMCLOCKHELPER_SETTINGS_IMPORT_INVALID_STYLE');
+	}else {
+		$params->{'importError'} = Slim::Utils::Strings::string('SETUP_PLUGIN_CUSTOMCLOCKHELPER_SETTINGS_IMPORT_EMPTY');
 	}
 	return undef;
 }

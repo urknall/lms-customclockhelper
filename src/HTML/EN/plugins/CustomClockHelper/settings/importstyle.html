@@ -3,6 +3,10 @@
 
 [% PROCESS plugins/CustomClockHelper/settings/subpage_chooser.html %]
 
+	[% IF importError %]
+		<p class="warning">[% importError | html %]</p>
+	[% END %]
+
 	<table border="0">
 		<tr><td colspan="2">
 			[% "SETUP_PLUGIN_CUSTOMCLOCKHELPER_SETTINGS_JSON_TEXT"|string %]
