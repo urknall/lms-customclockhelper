@@ -33,6 +33,20 @@ my $log   = logger('plugin.customclockhelper');
 
 my $plugin; # reference to main plugin
 
+sub getHashResult {
+	my ($request, $key) = @_;
+	return {} if !defined($request);
+	my $result = $request->getResult($key);
+	return ref($result) eq 'HASH' ? $result : {};
+}
+
+sub getArrayResult {
+	my ($request, $key) = @_;
+	return [] if !defined($request);
+	my $result = $request->getResult($key);
+	return ref($result) eq 'ARRAY' ? $result : [];
+}
+
 sub new {
 	my $class = shift;
 	$plugin   = shift;
@@ -459,9 +473,9 @@ sub handler {
 				my @values = ();
 				if(defined($currentItem->{'infotype'}) && $currentItem->{'infotype'} ne "") {
 					my $request = Slim::Control::Request::executeRequest($client,['SuperDateTime','misc']);
-					my $result = $request->getResult("miscData");
+					my $result = getHashResult($request,"miscData");
 					my %hashValues = ();
-					if(defined($result->{$currentItem->{'infotype'}}) && $result->{$currentItem->{'infotype'}} ne "") {
+					if(ref($result->{$currentItem->{'infotype'}}) eq 'HASH') {
 						my $infoTypeResult = $result->{$currentItem->{'infotype'}};
 						for my $key (keys %$infoTypeResult) {
 							my $entry=$infoTypeResult->{$key};
@@ -725,7 +739,7 @@ sub handler {
 			}elsif($item->{'id'} =~ /^favorite$/) {
 				$item->{'type'} = 'optionalsinglelist';
 				my $request = Slim::Control::Request::executeRequest(undef,['gallery','favorites']);
-				my $result = $request->getResult("item_loop");
+				my $result = getArrayResult($request,"item_loop");
 				my @values = ();
 				for my $entry (@$result) {
 					push @values,{id=>$entry->{'id'}, name=>$entry->{'title'}};
@@ -834,9 +848,9 @@ sub handler {
 				my @values = ();
 				if( defined($currentItem->{'infotype'}) && $currentItem->{'infotype'} ne "") {
 					my $request = Slim::Control::Request::executeRequest($client,['SuperDateTime','misc']);
-					my $result = $request->getResult("miscData");
+					my $result = getHashResult($request,"miscData");
 					my %hashValues = ();
-					if(defined($result->{$currentItem->{'infotype'}})) {
+					if(ref($result->{$currentItem->{'infotype'}}) eq 'HASH') {
 						my $infoTypeResult = $result->{$currentItem->{'infotype'}};
 						for my $key (keys %$infoTypeResult) {
 							my $entry=$infoTypeResult->{$key};
@@ -862,9 +876,9 @@ sub handler {
 				my @values = ();
 				if(defined($currentItem->{'infotype'}) && $currentItem->{'infotype'} ne "") {
 					my $request = Slim::Control::Request::executeRequest($client,['customclock','customitems','category:'.$currentItem->{'infotype'}]);
-					my $result = $request->getResult("items");
+					my $result = getHashResult($request,"items");
 					my %hashValues = ();
-					if(defined($result->{$currentItem->{'infotype'}})) {
+					if(ref($result->{$currentItem->{'infotype'}}) eq 'HASH') {
 						my $infoTypeResult = $result->{$currentItem->{'infotype'}};
 						for my $key (keys %$infoTypeResult) {
 							my $entry=$infoTypeResult->{$key};
@@ -885,9 +899,9 @@ sub handler {
 				my @values = ();
 				if( defined($currentItem->{'infotype'}) && $currentItem->{'infotype'} ne "") {
 					my $request = Slim::Control::Request::executeRequest($client,['customclock','customitems','category:'.$currentItem->{'infotype'}]);
-					my $result = $request->getResult("items");
+					my $result = getHashResult($request,"items");
 					my %hashValues = ();
-					if(defined($result->{$currentItem->{'infotype'}})) {
+					if(ref($result->{$currentItem->{'infotype'}}) eq 'HASH') {
 						my $infoTypeResult = $result->{$currentItem->{'infotype'}};
 						for my $key (keys %$infoTypeResult) {
 							my $entry=$infoTypeResult->{$key};
@@ -911,7 +925,7 @@ sub handler {
 			}elsif($item->{'id'} =~ /^infotype$/ &&  $itemtype =~ /^sdtmisc/) {
 				$item->{'type'} = 'optionalsinglecombobox';
 				my $request = Slim::Control::Request::executeRequest($client,['SuperDateTime','misc']);
-				my $result = $request->getResult("miscData");
+				my $result = getHashResult($request,"miscData");
 				my @values = ();
 				for my $entry (keys %$result) {
 					push @values,{id=>$entry,name=>$entry};				
@@ -923,7 +937,7 @@ sub handler {
 			}elsif($item->{'id'} =~ /^infotype$/ &&  $itemtype =~ /^plugin/) {
 				$item->{'type'} = 'optionalsinglecombobox';
 				my $request = Slim::Control::Request::executeRequest($client,['customclock','customitems']);
-				my $result = $request->getResult("items");
+				my $result = getHashResult($request,"items");
 				my @values = ();
 				for my $entry (keys %$result) {
 					push @values,{id=>$entry,name=>$entry};				
@@ -932,7 +946,7 @@ sub handler {
 			}elsif($item->{'id'} =~ /^location$/ &&  $itemtype eq 'sdtweathermapicon') {
 				$item->{'type'} = 'optionalsinglelist';
 				my $request = Slim::Control::Request::executeRequest($client,['SuperDateTime','wetmapURL']);
-				my $result = $request->getResult("wetmapURL");
+				my $result = getHashResult($request,"wetmapURL");
 				my @values = ();
 				for my $entry (keys %$result) {
 					push @values,{id=>$entry, name=>$entry};
@@ -941,7 +955,7 @@ sub handler {
 			}elsif($item->{'id'} =~ /^songinfomodule$/) {
 				$item->{'type'} = 'singlelist';
 				my $request = Slim::Control::Request::executeRequest(undef,['songinfomodules','type:image']);
-				my $result = $request->getResult("item_loop");
+				my $result = getArrayResult($request,"item_loop");
 				my @values = ();
 				for my $entry (@$result) {
 					push @values,{id=>$entry->{'id'}, name=>$entry->{'name'}};
