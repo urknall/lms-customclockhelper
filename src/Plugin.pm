@@ -306,7 +306,10 @@ sub exportJSON {
 		my $message = "Requested style was not found.";
 		return \$message;
 	}
-	$response->header("Content-Disposition","attachment; filename=\"".$params->{'style'}.".txt\"");
+	my $filename = $params->{'style'};
+	$filename =~ s/[^A-Za-z0-9._-]/_/g;
+	$filename = 'style' if $filename eq '';
+	$response->header("Content-Disposition","attachment; filename=\"".$filename.".txt\"");
 	my $message = JSON::XS::encode_json($style);
 	return \$message;
 }
