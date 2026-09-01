@@ -161,7 +161,7 @@ sub refreshNextProvider {
 			my $generation = $customItemProviders->{$providerId}->{refreshGeneration};
 			my $completion = sub {
 				my ($reference, $items) = @_;
-				addingCustomItems($reference, $items, $generation);
+				addingCustomItems($providerId, $items, $generation);
 			};
 			my $timeoutCallback = sub {
 				return if !defined($customItemProviders->{$providerId}) || !$customItemProviders->{$providerId}->{refreshing};
