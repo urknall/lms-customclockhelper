@@ -98,7 +98,7 @@ sub saveHandler {
 			return undef;
 		}
 		
-		if(defined($style)) {
+		if(ref($style) eq 'HASH' && defined($style->{'name'}) && $style->{'name'} ne '' && ref($style->{'models'}) eq 'ARRAY') {
 			my $modelsString = "";
 			my $models = $style->{'models'};
 			for my $model (@$models) {
@@ -114,6 +114,7 @@ sub saveHandler {
 			Plugins::CustomClockHelper::Plugin->setStyle($client,$styleName,$style);
 			return $style;	
 		}
+		$log->error("Invalid JSON style data: expected a named style with a models array");
 	}
 	return undef;
 }

@@ -261,9 +261,11 @@ sub exportJSON {
 sub getStyleKey {
 	my $style = shift;
 
+	return undef if ref($style) ne 'HASH';
 	my $models = $style->{'models'};
-	@$models = sort { $a cmp $b } @$models;
-	return $style->{'name'}." - ".join(',',@$models);
+	return undef if ref($models) ne 'ARRAY' || !defined($style->{'name'}) || $style->{'name'} eq '';
+	my @sortedModels = sort { $a cmp $b } @$models;
+	return $style->{'name'}." - ".join(',',@sortedModels);
 }
 
 sub getStyles {
@@ -279,10 +281,14 @@ sub getStyles {
 			my $jsonStyles = $response->content;
 			eval {
 				my $decodedStyles = JSON::XS::decode_json($jsonStyles);
-				my $stylesArray = $decodedStyles->{'data'}->{'item_loop'};
+					my $stylesArray = ref($decodedStyles) eq 'HASH' && ref($decodedStyles->{'data'}) eq 'HASH' && ref($decodedStyles->{'data'}->{'item_loop'}) eq 'ARRAY' ? $decodedStyles->{'data'}->{'item_loop'} : [];
 				for my $item (@$stylesArray) {
 					my $key = getStyleKey($item);
-					$styles->{$key} = $item;
+						if(defined($key)) {
+							$styles->{$key} = $item;
+						}else {
+							$log->warn("Ignoring invalid online style");
+						}
 				}
 			};
 			if ($@) {
