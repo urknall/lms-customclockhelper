@@ -240,9 +240,10 @@ sub handler {
 
 	my @availableItems = ();
 	my $id = 1;
-	if(defined($style) && defined($style->{'items'})) {
+	if(defined($style) && ref($style->{'items'}) eq 'ARRAY') {
 		my $items = $style->{'items'};
 		for my $item (@$items) {
+			$item = {} if ref($item) ne 'HASH';
 			my $entry = {
 				'id' => $id
 			};
@@ -283,7 +284,7 @@ sub handler {
 			}elsif($item->{'itemtype'} =~ /sdtweathermapicon$/) {
 				$entry->{'name'} = "Item #".$id." (".$item->{'itemtype'}."): ".$item->{'location'};
 			}else {
-				$entry->{'name'} = "Item #".$id." (".$item->{'itemtype'}.")";
+				$entry->{'name'} = "Item #".$id." (".($item->{'itemtype'} || 'invalid').")";
 			}
 			push @availableItems,$entry;
 			$id++;
@@ -300,9 +301,9 @@ sub handler {
 	$params->{'pluginCustomClockHelperStyleItems'} = \@availableItems;
 
 	my @itemproperties = ();
-	if(defined($style) && defined($style->{'items'}) && $params->{'pluginCustomClockHelperStyleItemNo'}) {
+	if(defined($style) && ref($style->{'items'}) eq 'ARRAY' && $params->{'pluginCustomClockHelperStyleItemNo'}) {
 		my $items = $style->{'items'};
-		my $currentItem = $items->[$params->{'pluginCustomClockHelperStyleItemNo'}-1] || {};
+		my $currentItem = ref($items->[$params->{'pluginCustomClockHelperStyleItemNo'}-1]) eq 'HASH' ? $items->[$params->{'pluginCustomClockHelperStyleItemNo'}-1] : {};
 		my $itemtype = $currentItem->{'itemtype'} || "timetext";
 			for my $property (keys %$currentItem) {
 				if($currentItem->{$property} ne "" && isItemTypeParameter($itemtype,$property)) {

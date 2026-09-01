@@ -99,7 +99,16 @@ sub saveHandler {
 			return undef;
 		}
 		
-		if(ref($style) eq 'HASH' && defined($style->{'name'}) && $style->{'name'} ne '' && ref($style->{'models'}) eq 'ARRAY' && ref($style->{'items'}) eq 'ARRAY') {
+		my $validItems = ref($style) eq 'HASH' && ref($style->{'items'}) eq 'ARRAY';
+		if($validItems) {
+			for my $item (@{$style->{'items'}}) {
+				if(ref($item) ne 'HASH') {
+					$validItems = 0;
+					last;
+				}
+			}
+		}
+		if(ref($style) eq 'HASH' && defined($style->{'name'}) && $style->{'name'} ne '' && ref($style->{'models'}) eq 'ARRAY' && $validItems) {
 			my $modelsString = "";
 			my $models = $style->{'models'};
 			for my $model (@$models) {
@@ -115,7 +124,7 @@ sub saveHandler {
 			Plugins::CustomClockHelper::Plugin->setStyle($client,$styleName,$style);
 			return $style;	
 		}
-		$log->error("Invalid JSON style data: expected a named style with models and items arrays");
+		$log->error("Invalid JSON style data: expected a named style with models and an array of item objects");
 		$params->{'importError'} = Slim::Utils::Strings::string('SETUP_PLUGIN_CUSTOMCLOCKHELPER_SETTINGS_IMPORT_INVALID_STYLE');
 	}else {
 		$params->{'importError'} = Slim::Utils::Strings::string('SETUP_PLUGIN_CUSTOMCLOCKHELPER_SETTINGS_IMPORT_EMPTY');
