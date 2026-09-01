@@ -123,6 +123,7 @@ sub addingCustomItems {
 	$log->info("Got refresh answer from $reference with ".(scalar(keys %$items))." number of items");
 	$refreshCustomItems->{$reference} = $items;
 	delete $provider->{refreshing};
+	delete $provider->{refreshStarted};
 	$provider->{refreshed} = 1;
 
 	my $lastProvider = 1;
@@ -151,10 +152,9 @@ sub addingCustomItems {
 
 sub refreshNextProvider {
 	Slim::Utils::Timers::killTimers(undef, \&refreshNextProvider); #Paranoia check
-	my $refreshInProgress = 0;
 	for my $id (keys %$customItemProviders) {
-		if(defined($customItemProviders->{$id}->{refreshing}) && !$customItemProviders->{$id}->{refreshed}) {
-			$refreshInProgress = 1;
+		if(defined($customItemProviders->{$id}->{refreshing}) && !$customItemProviders->{$id}->{refreshed} && !$customItemProviders->{$id}->{refreshStarted}) {
+			$customItemProviders->{$id}->{refreshStarted} = 1;
 			$log->info("Start refreshing $id");
 			my $providerId = $id;
 			my $generation = $customItemProviders->{$providerId}->{refreshGeneration};
@@ -180,7 +180,7 @@ sub refreshNextProvider {
 	    		my %empty = ();
 		    	addingCustomItems($id,\%empty,$generation);
 			}
-			
+			last;
 		}
 	}
 }
@@ -212,6 +212,7 @@ sub refreshCustomItems {
 				$customItemProviders->{$id}->{refreshing} = 1;
 				$customItemProviders->{$id}->{refreshed} = 0;
 				$customItemProviders->{$id}->{refreshGeneration} = $refreshGeneration;
+				delete $customItemProviders->{$id}->{refreshStarted};
 				delete $customItemProviders->{$id}->{refreshError};	
 			}
 		}	
