@@ -120,6 +120,11 @@ sub addingCustomItems {
 		Slim::Utils::Timers::killTimers(undef, $provider->{refreshTimeoutCallback});
 		delete $provider->{refreshTimeoutCallback};
 	}
+	if(ref($items) ne 'HASH') {
+		$log->error("Invalid custom item refresh result from $reference");
+		$provider->{refreshError} = 1;
+		$items = {};
+	}
 	
 	$log->info("Got refresh answer from $reference with ".(scalar(keys %$items))." number of items");
 	$refreshCustomItems->{$reference} = $items;
