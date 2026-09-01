@@ -110,7 +110,7 @@ sub pages {
 	);
 	push @pages,\%page;
 	for my $key (keys %$styles) {
-		my $styleItems = $styles->{$key}->{'items'};
+		my $styleItems = ref($styles->{$key}) eq 'HASH' && ref($styles->{$key}->{'items'}) eq 'ARRAY' ? $styles->{$key}->{'items'} : [];
 		my $enabled = 1;
 		for my $item (@$styleItems) {
 			if($item->{'itemtype'} eq 'galleryicon' && !$galleryicon) {

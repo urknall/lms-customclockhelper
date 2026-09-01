@@ -304,7 +304,7 @@ sub getStyleKey {
 
 	return undef if ref($style) ne 'HASH';
 	my $models = $style->{'models'};
-	return undef if ref($models) ne 'ARRAY' || !defined($style->{'name'}) || $style->{'name'} eq '';
+	return undef if ref($models) ne 'ARRAY' || ref($style->{'items'}) ne 'ARRAY' || !defined($style->{'name'}) || $style->{'name'} eq '';
 	my @sortedModels = sort { $a cmp $b } @$models;
 	return $style->{'name'}." - ".join(',',@sortedModels);
 }
