@@ -84,6 +84,7 @@ sub initPlugin
 	Slim::Control::Request::addDispatch(['customclockchangedstyles'],[0, 1, 0, undef]);
 	Slim::Control::Request::addDispatch(['customclocktitleformatsupdated'],[0, 1, 0, undef]);
 	Slim::Control::Request::addDispatch(['customclockchangedcustomitems'],[0, 1, 0, undef]);
+	$class->webPages();
 	Slim::Control::Request::subscribe(\&changedSong,[['playlist'],['newsong','delete','clear']]);
 	Slim::Control::Request::subscribe(\&changedRating,[['trackstat'],['changedrating']]);
 	${Slim::Music::Info::suffixes}{'binfile'} = 'binfile';
