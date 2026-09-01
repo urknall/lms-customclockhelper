@@ -302,7 +302,7 @@ sub handler {
 	my @itemproperties = ();
 	if(defined($style) && defined($style->{'items'}) && $params->{'pluginCustomClockHelperStyleItemNo'}) {
 		my $items = $style->{'items'};
-		my $currentItem = $items->[$params->{'pluginCustomClockHelperStyleItemNo'}-1];
+		my $currentItem = $items->[$params->{'pluginCustomClockHelperStyleItemNo'}-1] || {};
 		my $itemtype = $currentItem->{'itemtype'} || "timetext";
 			for my $property (keys %$currentItem) {
 				if($currentItem->{$property} ne "" && isItemTypeParameter($itemtype,$property)) {
@@ -1053,6 +1053,15 @@ sub saveHandler {
 	}elsif($name && $styleName) {
 		my $itemId = $params->{'pluginCustomClockHelperStyleItemNo'};
 		my $oldStyle = Plugins::CustomClockHelper::Plugin->getStyle($oldStyleName);
+		if(defined($oldStyleName) && (!ref($oldStyle) || ref($oldStyle->{'items'}) ne 'ARRAY')) {
+			$log->error("Unable to update missing or invalid style: $oldStyleName");
+			return undef;
+		}
+		$oldStyle ||= { 'items' => [] };
+		if(defined($itemId) && $itemId ne '' && ($itemId !~ /^\d+$/ || $itemId < 1 || $itemId > scalar(@{$oldStyle->{'items'}}) + 1 || ($params->{'itemdelete'} && $itemId > scalar(@{$oldStyle->{'items'}})))) {
+			$log->error("Invalid style item number: $itemId");
+			return undef;
+		}
 		if($itemId && $itemId>0) {
 			my $items = $oldStyle->{'items'};
 			if($params->{'itemdelete'}) {
