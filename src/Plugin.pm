@@ -268,6 +268,7 @@ sub updateTitleFormats {
 
 	my $titleFormatsHash = {};
 	my $formats = $prefs->get("titleformats");
+	$formats = [] if ref($formats) ne 'ARRAY';
 	for my $format (@$formats) {
 		my $value = undef;
 		if(defined($song)) {
@@ -452,6 +453,7 @@ sub getTitleFormats {
 
 	my $titleFormatsHash = {};
 	my $formats = $prefs->get("titleformats");
+	$formats = [] if ref($formats) ne 'ARRAY';
 	my $songIndex = Slim::Player::Source::playingSongIndex($client);
 	my $song = Slim::Player::Playlist::song($client,$songIndex);
 	for my $format (@$formats) {
