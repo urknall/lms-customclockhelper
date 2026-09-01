@@ -299,7 +299,13 @@ sub webPages {
 
 sub exportJSON {
 	my ($client, $params, $prepareResponseForSending, $httpClient, $response) = @_;
-	my $style = Plugins::CustomClockHelper::Plugin->getStyle($params->{'style'}) || {};
+	my $style = Plugins::CustomClockHelper::Plugin->getStyle($params->{'style'});
+	if(!defined($style)) {
+		$log->warn("Unable to export missing style: ".($params->{'style'} || ''));
+		$response->header("Content-Type","text/plain; charset=utf-8");
+		my $message = "Requested style was not found.";
+		return \$message;
+	}
 	$response->header("Content-Disposition","attachment; filename=\"".$params->{'style'}.".txt\"");
 	my $message = JSON::XS::encode_json($style);
 	return \$message;
