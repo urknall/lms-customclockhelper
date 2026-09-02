@@ -47,6 +47,35 @@ sub getArrayResult {
 	return ref($result) eq 'ARRAY' ? $result : [];
 }
 
+# Builds the logotype/icon combobox options for a custom-item infotype
+# result. Scalar entries offer their own key as the option (e.g. a result of
+# `logoURL => "/image/logo.png"` should offer "logoURL", not the URL value);
+# hash entries offer whichever of their own keys look like an icon/logo/url
+# attribute.
+sub getIconLogoOptions {
+	my $infoTypeResult = shift;
+	my %hashValues = ();
+	if(ref($infoTypeResult) eq 'HASH') {
+		for my $key (keys %$infoTypeResult) {
+			my $entry = $infoTypeResult->{$key};
+			if(!ref($entry)) {
+				$hashValues{$key} = 1;
+			}else {
+				for my $attr (keys %$entry) {
+					if(lc($attr) =~ /^icon/ || lc($attr) =~ /icon$/ || lc($attr) =~ /^logo/ || lc($attr) =~ /logo$/ || lc($attr) =~ /url$/) {
+						$hashValues{$attr} = 1;
+					}
+				}
+			}
+		}
+	}
+	my @values = ();
+	for my $entry (keys %hashValues) {
+		push @values,{id=>$entry,name=>$entry};
+	}
+	return \@values;
+}
+
 sub new {
 	my $class = shift;
 	$plugin   = shift;
@@ -850,26 +879,7 @@ sub handler {
 				if( defined($currentItem->{'infotype'}) && $currentItem->{'infotype'} ne "") {
 					my $request = Slim::Control::Request::executeRequest($client,['SuperDateTime','misc']);
 					my $result = getHashResult($request,"miscData");
-					my %hashValues = ();
-					if(ref($result->{$currentItem->{'infotype'}}) eq 'HASH') {
-						my $infoTypeResult = $result->{$currentItem->{'infotype'}};
-						for my $key (keys %$infoTypeResult) {
-							my $entry=$infoTypeResult->{$key};
-							if(!ref($entry)) {
-								$hashValues{$entry} = 1;
-							}else {
-								for my $attr (keys %$entry) {
-									my $subkeyentry = $entry->{$attr};
-									if(lc($attr) =~ /^icon/ || lc($attr) =~ /icon$/ || lc($attr) =~ /^logo/ || lc($attr) =~ /logo$/ || lc($attr) =~ /url$/) {
-										$hashValues{$attr} = 1;
-									}
-								}
-							}
-						}
-					}
-					for my $entry (keys %hashValues) {
-						push @values,{id=>$entry,name=>$entry};				
-					}
+					@values = @{ getIconLogoOptions($result->{$currentItem->{'infotype'}}) };
 				}
 				$item->{'values'} = \@values;
 			}elsif($item->{'id'} eq 'format' &&  $itemtype eq 'plugintext') {
@@ -901,26 +911,7 @@ sub handler {
 				if( defined($currentItem->{'infotype'}) && $currentItem->{'infotype'} ne "") {
 					my $request = Slim::Control::Request::executeRequest($client,['customclock','customitems','category:'.$currentItem->{'infotype'}]);
 					my $result = getHashResult($request,"items");
-					my %hashValues = ();
-					if(ref($result->{$currentItem->{'infotype'}}) eq 'HASH') {
-						my $infoTypeResult = $result->{$currentItem->{'infotype'}};
-						for my $key (keys %$infoTypeResult) {
-							my $entry=$infoTypeResult->{$key};
-							if(!ref($entry)) {
-								$hashValues{$entry} = 1;
-							}else {
-								for my $attr (keys %$entry) {
-									my $subkeyentry = $entry->{$attr};
-									if(lc($attr) =~ /^icon/ || lc($attr) =~ /icon$/ || lc($attr) =~ /^logo/ || lc($attr) =~ /logo$/ || lc($attr) =~ /url$/) {
-										$hashValues{$attr} = 1;
-									}
-								}
-							}
-						}
-					}
-					for my $entry (keys %hashValues) {
-						push @values,{id=>$entry,name=>$entry};				
-					}
+					@values = @{ getIconLogoOptions($result->{$currentItem->{'infotype'}}) };
 				}
 				$item->{'values'} = \@values;
 			}elsif($item->{'id'} =~ /^infotype$/ &&  $itemtype =~ /^sdtmisc/) {
