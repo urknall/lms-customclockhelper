@@ -64,6 +64,23 @@ $prefs->migrate(2, sub {
 	1;
 });
 
+# Timer intervals are user-editable text fields; reject non-numeric,
+# negative or too-small values instead of feeding them straight into
+# Time::HiRes arithmetic, where e.g. a negative value would fire immediately
+# and repeatedly (a tight refresh loop hammering providers/LMS).
+sub _getValidatedInterval {
+	my $prefName = shift;
+	my $default = shift;
+	my $minimum = shift;
+	$minimum = 0 if !defined($minimum);
+
+	my $value = $prefs->get($prefName);
+	if(!defined($value) || $value !~ /^\d+(?:\.\d+)?$/ || $value < $minimum) {
+		return $default;
+	}
+	return $value;
+}
+
 sub getDisplayName()
 {
 	return string('PLUGIN_CUSTOMCLOCKHELPER'); 
@@ -92,7 +109,7 @@ sub initPlugin
 }
 
 sub postinitPlugin {
-	my $interval = $prefs->get('customitemsstartuprefreshinterval') || 60;
+	my $interval = _getValidatedInterval('customitemsstartuprefreshinterval', 60, 0);
 	Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + ($interval), \&refreshCustomItems);
 }
 
@@ -153,7 +170,7 @@ sub addingCustomItems {
 		$refreshCustomItems = undef;
 		Slim::Control::Request::notifyFromArray(undef,['customclockchangedcustomitems',\@providers]);
 		$log->debug("Scheduling next refresh...");
-		my $interval = $prefs->get('customitemsrefreshinterval') || 300;
+		my $interval = _getValidatedInterval('customitemsrefreshinterval', 300, 5);
 		Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + ($interval), \&refreshCustomItems);
 	}else {
 		$log->debug("Scheduling refresh of next provider");
@@ -205,7 +222,7 @@ sub refreshCustomItems {
 	Slim::Utils::Timers::killTimers(undef, \&refreshCustomItems); #Paranoia check
 	if(defined($provider) && $provider ne "" && !defined($customItemProviders->{$provider})) {
 		$log->warn("Unknown custom item provider: $provider");
-		my $interval = $prefs->get('customitemsrefreshinterval') || 300;
+		my $interval = _getValidatedInterval('customitemsrefreshinterval', 300, 5);
 		Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + ($interval), \&refreshCustomItems);
 		return;
 	}
@@ -236,7 +253,7 @@ sub refreshCustomItems {
 		}
 	}elsif(!defined($provider) || $provider eq "") {
 		$log->debug("Nothing to refresh, scheduling next refresh...");
-		my $interval = $prefs->get('customitemsrefreshinterval') || 300;
+		my $interval = _getValidatedInterval('customitemsrefreshinterval', 300, 5);
 		Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + ($interval), \&refreshCustomItems);
 	}
 }
