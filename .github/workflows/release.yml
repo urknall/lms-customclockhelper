@@ -9,12 +9,12 @@ jobs:
 
     steps:
       - name: Checkout Repository Master
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
            ref: master
 
       - name: Checkout lms-repo gh-pages
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
            repository: urknall/lms-repo
            ref: gh-pages
