@@ -91,14 +91,19 @@ sub handler {
 }
 
 sub validateFormat {
-        my $client = shift;
-        my $format = shift;
+	my $client = shift;
+	my $format = shift;
 
-        my $formats = Plugins::MusicInfoSCR::Settings::getFormatStrings($client);
-        if(!exists $formats->{$format}) {
-                return undef;
-        }
-        return $format;
+	if(!UNIVERSAL::can("Plugins::MusicInfoSCR::Settings","getFormatStrings")) {
+		$log->debug("MusicInfoSCR plugin not available, rejecting custom title format: ".(defined($format)?$format:''));
+		return undef;
+	}
+
+	my $formats = Plugins::MusicInfoSCR::Settings::getFormatStrings($client);
+	if(!exists $formats->{$format}) {
+		return undef;
+	}
+	return $format;
 }
 
 
