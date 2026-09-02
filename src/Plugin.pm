@@ -280,9 +280,14 @@ sub updateTitleFormats {
 			$titleFormatsHash->{$format} = "";
 		}
 	}
+	my $url = "";
 	if(defined($song) && $song->can('url')) {
-		Slim::Control::Request::notifyFromArray(undef,['customclocktitleformatsupdated', $titleFormatsHash, $song->url]);
+		$url = $song->url;
 	}
+	# Notify on both transitions (song present and song absent) so the
+	# applet can tell a genuinely-empty update from "nothing changed" and
+	# clear its cached title formats when the playlist stops/clears.
+	Slim::Control::Request::notifyFromArray(undef,['customclocktitleformatsupdated', $titleFormatsHash, $url]);
 }
 
 sub webPages {
