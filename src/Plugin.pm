@@ -123,11 +123,16 @@ sub addingCustomItems {
 	if(ref($items) ne 'HASH') {
 		$log->error("Invalid custom item refresh result from $reference");
 		$provider->{refreshError} = 1;
-		$items = {};
 	}
-	
-	$log->info("Got refresh answer from $reference with ".(scalar(keys %$items))." number of items");
-	$refreshCustomItems->{$reference} = $items;
+
+	if($provider->{refreshError}) {
+		# Keep whatever data we already committed for this provider instead
+		# of replacing it with an empty/malformed result.
+		$log->warn("Refresh failed for $reference, keeping last-known-good data");
+	}else {
+		$log->info("Got refresh answer from $reference with ".(scalar(keys %$items))." number of items");
+		$refreshCustomItems->{$reference} = $items;
+	}
 	delete $provider->{refreshing};
 	delete $provider->{refreshStarted};
 	$provider->{refreshed} = 1;
