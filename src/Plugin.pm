@@ -97,7 +97,7 @@ sub initPlugin
 	Slim::Control::Request::addDispatch(['customclock','styles'], [0, 1, 0, \&getClockStyles]);
 	Slim::Control::Request::addDispatch(['customclock', 'titleformats'],[0, 1, 0, \&getTitleFormats]);
 	Slim::Control::Request::addDispatch(['customclock', 'customitems'],[0, 1, 0, \&getCustomItems]);
-	Slim::Control::Request::addDispatch(['customclock', 'refreshcustomitems'],[0, 1, 0, \&refreshCustomItems]);
+	Slim::Control::Request::addDispatch(['customclock', 'refreshcustomitems'],[0, 1, 0, \&refreshCustomItemsCommand]);
 	Slim::Control::Request::addDispatch(['customclockchangedstyles'],[0, 1, 0, undef]);
 	Slim::Control::Request::addDispatch(['customclocktitleformatsupdated'],[0, 1, 0, undef]);
 	Slim::Control::Request::addDispatch(['customclockchangedcustomitems'],[0, 1, 0, undef]);
@@ -213,11 +213,15 @@ sub refreshNextProvider {
 	}
 }
 
+sub refreshCustomItemsCommand {
+	my $request = shift;
+	my $provider = $request->getParam('provider');
+	refreshCustomItems($provider);
+	$request->setStatusDone();
+}
+
 sub refreshCustomItems {
 	my $provider = shift;
-	if(ref($provider) && $provider->can('getParam')) {
-		$provider = $provider->getParam('provider');
-	}
 	$log->debug("Refreshing custom items: ".($provider?$provider:""));
 	Slim::Utils::Timers::killTimers(undef, \&refreshCustomItems); #Paranoia check
 	if(defined($provider) && $provider ne "" && !defined($customItemProviders->{$provider})) {
