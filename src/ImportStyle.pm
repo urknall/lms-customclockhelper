@@ -102,7 +102,11 @@ sub saveHandler {
 		my $validItems = ref($style) eq 'HASH' && ref($style->{'items'}) eq 'ARRAY';
 		if($validItems) {
 			for my $item (@{$style->{'items'}}) {
-				if(ref($item) ne 'HASH') {
+				# The applet matches item.itemtype against string patterns at
+				# dozens of call sites without a nil/type guard, so a missing
+				# or non-scalar itemtype crashes the whole screen instead of
+				# just being skipped -- reject it here instead.
+				if(ref($item) ne 'HASH' || !defined($item->{'itemtype'}) || ref($item->{'itemtype'}) || $item->{'itemtype'} eq '') {
 					$validItems = 0;
 					last;
 				}
