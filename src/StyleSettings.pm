@@ -1125,6 +1125,10 @@ sub saveHandler {
 				my @empty = ();
 				$style->{'items'} = \@empty;
 			}
+			if(!defined($style->{'models'})) {
+				my @empty = ();
+				$style->{'models'} = \@empty;
+			}
 			my $models = $style->{'models'};
 			@$models = sort { $a cmp $b } @$models;
 		}
