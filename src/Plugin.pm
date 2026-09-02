@@ -424,9 +424,14 @@ sub setStyle {
 	}
 	$prefs->set("styles",$styles);
 
+	# Notify with the merged (online + local) catalog. The local-only set
+	# above is only for persisting the edit -- using it here too would make
+	# every local edit look like every online style was deleted, since
+	# online styles never appear in the local-only set.
+	my $notifyStyles = getStyles();
 	my @stylesArray = ();
-	for my $style (keys %$styles) {
-		push @stylesArray,$styles->{$style}
+	for my $style (keys %$notifyStyles) {
+		push @stylesArray,$notifyStyles->{$style}
 	}
 	Slim::Control::Request::notifyFromArray(undef,['customclockchangedstyles',\@stylesArray]);
 }
@@ -443,9 +448,12 @@ sub renameAndSetStyle {
 	$styles->{$newStyleId} = $styleData;
 	$prefs->set("styles",$styles);
 
+	# See setStyle() above: notify with the merged (online + local) catalog,
+	# not the local-only set used to persist the rename.
+	my $notifyStyles = getStyles();
 	my @stylesArray = ();
-	for my $style (keys %$styles) {
-		push @stylesArray,$styles->{$style}
+	for my $style (keys %$notifyStyles) {
+		push @stylesArray,$notifyStyles->{$style}
 	}
 	Slim::Control::Request::notifyFromArray(undef,['customclockchangedstyles',\@stylesArray]);
 }
