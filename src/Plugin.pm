@@ -376,7 +376,12 @@ sub getStyles {
 	$log->debug("Getting downloaded styles");
 
 	my $styles = {};
+	# True unless an online fetch was attempted and failed -- lets callers
+	# that build deletion-reconciliation notifications know whether this
+	# snapshot is actually authoritative for online styles.
+	my $onlineOk = 1;
 	if(!$localOnly) {
+		$onlineOk = 0;
 		# Short explicit timeout: this runs inline in the request-handling
 		# path, and LWP's default (180s) would let a slow/unreachable
 		# remote catalog server stall LMS web/CLI requests.
@@ -400,6 +405,7 @@ sub getStyles {
 				$log->error("Failed parse online styles:\n$@\n");
 			}else {
 				$log->debug("Got online styles");
+				$onlineOk = 1;
 			}
 		}else {
 			$log->error("Unable to get online styles");
@@ -413,7 +419,16 @@ sub getStyles {
 		}
 	}
 	$log->debug("GOT: ".Dumper($styles));
-	return $styles;
+	return wantarray ? ($styles, $onlineOk) : $styles;
+}
+
+# Annotates a style hash with its stable identity (name + sorted models,
+# same format as getStyleKey()) so JiveLite can distinguish style variants
+# that share a display name but support different models, instead of
+# reconciling by name alone.
+sub _withStyleId {
+	my ($key, $style) = @_;
+	return { %$style, styleid => $key };
 }
 
 sub getStyle {
@@ -445,12 +460,15 @@ sub setStyle {
 	# above is only for persisting the edit -- using it here too would make
 	# every local edit look like every online style was deleted, since
 	# online styles never appear in the local-only set.
-	my $notifyStyles = getStyles();
+	my ($notifyStyles, $onlineOk) = getStyles();
 	my @stylesArray = ();
 	for my $style (keys %$notifyStyles) {
-		push @stylesArray,$notifyStyles->{$style}
+		push @stylesArray,_withStyleId($style,$notifyStyles->{$style})
 	}
-	Slim::Control::Request::notifyFromArray(undef,['customclockchangedstyles',\@stylesArray]);
+	# The 3rd element tells the applet whether this snapshot is authoritative
+	# for online styles (i.e. safe to use for deletion reconciliation) -- a
+	# failed remote fetch must not look like "every online style is gone".
+	Slim::Control::Request::notifyFromArray(undef,['customclockchangedstyles',\@stylesArray,$onlineOk?1:0]);
 }
 
 sub renameAndSetStyle {
@@ -467,12 +485,12 @@ sub renameAndSetStyle {
 
 	# See setStyle() above: notify with the merged (online + local) catalog,
 	# not the local-only set used to persist the rename.
-	my $notifyStyles = getStyles();
+	my ($notifyStyles, $onlineOk) = getStyles();
 	my @stylesArray = ();
 	for my $style (keys %$notifyStyles) {
-		push @stylesArray,$notifyStyles->{$style}
+		push @stylesArray,_withStyleId($style,$notifyStyles->{$style})
 	}
-	Slim::Control::Request::notifyFromArray(undef,['customclockchangedstyles',\@stylesArray]);
+	Slim::Control::Request::notifyFromArray(undef,['customclockchangedstyles',\@stylesArray,$onlineOk?1:0]);
 }
 
 sub getClockStyles {
@@ -482,7 +500,7 @@ sub getClockStyles {
 
 	my @stylesArray = ();
 	for my $style (keys %$styles) {
-		push @stylesArray,$styles->{$style}
+		push @stylesArray,_withStyleId($style,$styles->{$style})
 	}
 	$request->addResult('item_loop', \@stylesArray);
 	$request->setStatusDone();
