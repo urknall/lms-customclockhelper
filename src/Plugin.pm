@@ -108,6 +108,20 @@ sub initPlugin
 	${Slim::Music::Info::types}{'binfile'} = 'application/octet-stream';
 }
 
+sub shutdownPlugin {
+	Slim::Utils::Timers::killTimers(undef, \&refreshCustomItems);
+	Slim::Utils::Timers::killTimers(undef, \&refreshNextProvider);
+	for my $id (keys %$customItemProviders) {
+		if($customItemProviders->{$id}->{refreshTimeoutCallback}) {
+			Slim::Utils::Timers::killTimers(undef, $customItemProviders->{$id}->{refreshTimeoutCallback});
+			delete $customItemProviders->{$id}->{refreshTimeoutCallback};
+		}
+	}
+	Slim::Control::Request::unsubscribe(\&changedSong);
+	Slim::Control::Request::unsubscribe(\&changedRating);
+	$refreshCustomItems = undef;
+}
+
 sub postinitPlugin {
 	my $interval = _getValidatedInterval('customitemsstartuprefreshinterval', 60, 0);
 	Slim::Utils::Timers::setTimer(undef, Time::HiRes::time() + ($interval), \&refreshCustomItems);
