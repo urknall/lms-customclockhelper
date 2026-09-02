@@ -60,7 +60,7 @@ sub getIconLogoOptions {
 			my $entry = $infoTypeResult->{$key};
 			if(!ref($entry)) {
 				$hashValues{$key} = 1;
-			}else {
+			}elsif(ref($entry) eq 'HASH') {
 				for my $attr (keys %$entry) {
 					if(lc($attr) =~ /^icon/ || lc($attr) =~ /icon$/ || lc($attr) =~ /^logo/ || lc($attr) =~ /logo$/ || lc($attr) =~ /url$/) {
 						$hashValues{$attr} = 1;
