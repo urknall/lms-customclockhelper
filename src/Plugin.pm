@@ -391,21 +391,30 @@ sub getStyles {
 			my $jsonStyles = $response->content;
 			eval {
 				my $decodedStyles = JSON::XS::decode_json($jsonStyles);
-					my $stylesArray = ref($decodedStyles) eq 'HASH' && ref($decodedStyles->{'data'}) eq 'HASH' && ref($decodedStyles->{'data'}->{'item_loop'}) eq 'ARRAY' ? $decodedStyles->{'data'}->{'item_loop'} : [];
-				for my $item (@$stylesArray) {
-					my $key = getStyleKey($item);
+				if(ref($decodedStyles) eq 'HASH' && ref($decodedStyles->{'data'}) eq 'HASH' && ref($decodedStyles->{'data'}->{'item_loop'}) eq 'ARRAY') {
+					my $stylesArray = $decodedStyles->{'data'}->{'item_loop'};
+					my $allValid = 1;
+					for my $item (@$stylesArray) {
+						my $key = getStyleKey($item);
 						if(defined($key)) {
 							$styles->{$key} = $item;
 						}else {
 							$log->warn("Ignoring invalid online style");
+							$allValid = 0;
 						}
+					}
+					if($allValid) {
+						$log->debug("Got online styles");
+						$onlineOk = 1;
+					}else {
+						$log->error("Online style catalog contained invalid entries; treating snapshot as non-authoritative for deletions");
+					}
+				}else {
+					$log->error("Online style catalog has an unexpected structure; treating snapshot as non-authoritative for deletions");
 				}
 			};
 			if ($@) {
 				$log->error("Failed parse online styles:\n$@\n");
-			}else {
-				$log->debug("Got online styles");
-				$onlineOk = 1;
 			}
 		}else {
 			$log->error("Unable to get online styles");
