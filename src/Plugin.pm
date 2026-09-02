@@ -363,7 +363,10 @@ sub getStyles {
 
 	my $styles = {};
 	if(!$localOnly) {
-		my $http = LWP::UserAgent->new;
+		# Short explicit timeout: this runs inline in the request-handling
+		# path, and LWP's default (180s) would let a slow/unreachable
+		# remote catalog server stall LMS web/CLI requests.
+		my $http = LWP::UserAgent->new(timeout => 5);
 		my $response = $http->get("http://lms.hashsum.org/clockstyles8.json");
 		if($response->is_success) {
 			my $jsonStyles = $response->content;
