@@ -366,7 +366,10 @@ sub getStyleKey {
 
 	return undef if ref($style) ne 'HASH';
 	my $models = $style->{'models'};
-	return undef if ref($models) ne 'ARRAY' || ref($style->{'items'}) ne 'ARRAY' || !defined($style->{'name'}) || $style->{'name'} eq '';
+	# A reference here would stringify into a memory-address-dependent key,
+	# the same class of bug already fixed for models below.
+	return undef if ref($models) ne 'ARRAY' || ref($style->{'items'}) ne 'ARRAY'
+		|| !defined($style->{'name'}) || ref($style->{'name'}) || $style->{'name'} eq '';
 	# A non-string element would still sort (Perl stringifies refs via cmp)
 	# but produce a different, memory-address-dependent key on every run.
 	for my $model (@$models) {
