@@ -142,6 +142,7 @@ sub pages {
 		my $styleItems = ref($styles->{$key}) eq 'HASH' && ref($styles->{$key}->{'items'}) eq 'ARRAY' ? $styles->{$key}->{'items'} : [];
 		my $enabled = 1;
 		for my $item (@$styleItems) {
+			next if ref($item) ne 'HASH' || !defined($item->{'itemtype'}) || ref($item->{'itemtype'});
 			if($item->{'itemtype'} eq 'galleryicon' && !$galleryicon) {
 				$enabled = 0;
 			}elsif(($item->{'itemtype'} =~ /^sdtstock/ || $item->{'itemtype'} =~ /^sdtmisc/ || $item->{'itemtype'} =~ /^sdtsport/ || $item->{'itemtype'} =~ /^sdttext/ || $item->{'itemtype'} =~ /^sdtweather/) && !$sdtnew) {
