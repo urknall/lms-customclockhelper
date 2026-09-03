@@ -364,23 +364,40 @@ sub exportJSON {
 sub getStyleKey {
 	my $style = shift;
 
-	return undef if ref($style) ne 'HASH';
-	my $models = $style->{'models'};
-	# A reference here would stringify into a memory-address-dependent key,
-	# the same class of bug already fixed for models below.
-	return undef if ref($models) ne 'ARRAY' || ref($style->{'items'}) ne 'ARRAY'
-		|| !defined($style->{'name'}) || ref($style->{'name'}) || $style->{'name'} eq '';
-	# A non-string element would still sort (Perl stringifies refs via cmp)
-	# but produce a different, memory-address-dependent key on every run.
-	for my $model (@$models) {
-		return undef if ref($model) || !defined($model);
-	}
-	my @sortedModels = sort { $a cmp $b } @$models;
+	return undef if !validateStyle($style);
+	my @sortedModels = sort { $a cmp $b } @{$style->{'models'}};
 	# No models means "not restricted to specific devices" - matches the
 	# pre-existing convention (ImportStyle.pm/StyleSettings.pm both only
 	# appended " - <models>" when there was at least one model), so keep
 	# a bare name here too rather than a trailing " - " with nothing after.
 	return @sortedModels ? $style->{'name'}." - ".join(',',@sortedModels) : $style->{'name'};
+}
+
+# Single source of truth for "is this a well-formed style" - name/models/
+# items/itemtype - shared by getStyleKey (key computation), ImportStyle.pm
+# (import validation) and getStyles (online catalog + local-pref loading
+# authority), so each place can't drift from the others' idea of "valid".
+sub validateStyle {
+	my $style = shift;
+	return 0 if ref($style) ne 'HASH';
+	# A reference here would stringify into a memory-address-dependent key.
+	return 0 if !defined($style->{'name'}) || ref($style->{'name'}) || $style->{'name'} eq '';
+	my $models = $style->{'models'};
+	return 0 if ref($models) ne 'ARRAY';
+	# A non-string element would still sort (Perl stringifies refs via cmp)
+	# but produce a different, memory-address-dependent key on every run.
+	for my $model (@$models) {
+		return 0 if ref($model) || !defined($model);
+	}
+	my $items = $style->{'items'};
+	return 0 if ref($items) ne 'ARRAY';
+	# The applet matches item.itemtype against string patterns at dozens of
+	# call sites without a nil/type guard, so a missing or non-scalar
+	# itemtype crashes the whole screen instead of just being skipped.
+	for my $item (@$items) {
+		return 0 if ref($item) ne 'HASH' || !defined($item->{'itemtype'}) || ref($item->{'itemtype'}) || $item->{'itemtype'} eq '';
+	}
+	return 1;
 }
 
 # One-time startup migration: older saves (or ones made before this fix)

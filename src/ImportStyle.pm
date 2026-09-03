@@ -99,36 +99,22 @@ sub saveHandler {
 			return undef;
 		}
 		
-		my $validItems = ref($style) eq 'HASH' && ref($style->{'items'}) eq 'ARRAY';
-		if($validItems) {
-			for my $item (@{$style->{'items'}}) {
-				# The applet matches item.itemtype against string patterns at
-				# dozens of call sites without a nil/type guard, so a missing
-				# or non-scalar itemtype crashes the whole screen instead of
-				# just being skipped -- reject it here instead.
-				if(ref($item) ne 'HASH' || !defined($item->{'itemtype'}) || ref($item->{'itemtype'}) || $item->{'itemtype'} eq '') {
-					$validItems = 0;
-					last;
-				}
-			}
-		}
-		if(ref($style) eq 'HASH' && defined($style->{'name'}) && $style->{'name'} ne '' && ref($style->{'models'}) eq 'ARRAY' && $validItems) {
-			# Use the same canonical key builder as everywhere else
-			# (getStyleKey - sorts models alphabetically, and re-validates
-			# models/name more strictly than the checks above, e.g. rejects
-			# a non-string model or a reference-valued name) instead of
-			# concatenating models in whatever order the source JSON used -
-			# a mismatched key here breaks later lookups by StyleSettings.pm
-			# (which populates its "current style" field via getStyleKey()).
-			# No fallback to the raw name: getStyles() only ever recognizes
-			# a style by its canonical getStyleKey() value, so saving under
-			# anything else would make the import "succeed" while the style
-			# silently fails to show up afterwards.
-			my $styleName = Plugins::CustomClockHelper::Plugin::getStyleKey($style);
-			if(defined($styleName)) {
-				Plugins::CustomClockHelper::Plugin->setStyle($client,$styleName,$style);
-				return $style;
-			}
+		# validateStyle() (via getStyleKey() below) is the single shared
+		# validator for name/models/items/itemtype - not reimplemented
+		# here, so this can't drift from what getStyles() later accepts.
+		# Use the same canonical key builder as everywhere else
+		# (getStyleKey - sorts models alphabetically) instead of
+		# concatenating models in whatever order the source JSON used -
+		# a mismatched key here breaks later lookups by StyleSettings.pm
+		# (which populates its "current style" field via getStyleKey()).
+		# No fallback to the raw name: getStyles() only ever recognizes
+		# a style by its canonical getStyleKey() value, so saving under
+		# anything else would make the import "succeed" while the style
+		# silently fails to show up afterwards.
+		my $styleName = Plugins::CustomClockHelper::Plugin::getStyleKey($style);
+		if(defined($styleName)) {
+			Plugins::CustomClockHelper::Plugin->setStyle($client,$styleName,$style);
+			return $style;
 		}
 		$log->error("Invalid JSON style data: expected a named style with models and an array of item objects");
 		$params->{'importError'} = Slim::Utils::Strings::string('SETUP_PLUGIN_CUSTOMCLOCKHELPER_SETTINGS_IMPORT_INVALID_STYLE');
