@@ -114,13 +114,21 @@ sub saveHandler {
 		}
 		if(ref($style) eq 'HASH' && defined($style->{'name'}) && $style->{'name'} ne '' && ref($style->{'models'}) eq 'ARRAY' && $validItems) {
 			# Use the same canonical key builder as everywhere else
-			# (getStyleKey - sorts models alphabetically) instead of
+			# (getStyleKey - sorts models alphabetically, and re-validates
+			# models/name more strictly than the checks above, e.g. rejects
+			# a non-string model or a reference-valued name) instead of
 			# concatenating models in whatever order the source JSON used -
 			# a mismatched key here breaks later lookups by StyleSettings.pm
 			# (which populates its "current style" field via getStyleKey()).
-			my $styleName = Plugins::CustomClockHelper::Plugin::getStyleKey($style) // $style->{'name'};
-			Plugins::CustomClockHelper::Plugin->setStyle($client,$styleName,$style);
-			return $style;	
+			# No fallback to the raw name: getStyles() only ever recognizes
+			# a style by its canonical getStyleKey() value, so saving under
+			# anything else would make the import "succeed" while the style
+			# silently fails to show up afterwards.
+			my $styleName = Plugins::CustomClockHelper::Plugin::getStyleKey($style);
+			if(defined($styleName)) {
+				Plugins::CustomClockHelper::Plugin->setStyle($client,$styleName,$style);
+				return $style;
+			}
 		}
 		$log->error("Invalid JSON style data: expected a named style with models and an array of item objects");
 		$params->{'importError'} = Slim::Utils::Strings::string('SETUP_PLUGIN_CUSTOMCLOCKHELPER_SETTINGS_IMPORT_INVALID_STYLE');
