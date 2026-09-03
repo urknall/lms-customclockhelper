@@ -464,7 +464,17 @@ sub getStyles {
 		$log->debug("Got locally saved styles");
 		my $localStyles = $prefs->get("styles");
 		for my $key (keys %$localStyles) {
-			$styles->{$key} = $localStyles->{$key};
+			my $style = $localStyles->{$key};
+			# Validate at this single central merge point (same validator
+			# already used for online styles below) rather than relying on
+			# every downstream consumer (StyleSettings::pages(), _withStyleId's
+			# hash-spread, the applet) to defensively guard against a very
+			# old/manually-corrupted local style that isn't even a HASH.
+			if(!defined(getStyleKey($style))) {
+				$log->error("Ignoring invalid local style '$key' - not a well-formed style");
+				next;
+			}
+			$styles->{$key} = $style;
 			$localKeys->{$key} = 1;
 		}
 	}
