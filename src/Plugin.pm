@@ -367,6 +367,11 @@ sub getStyleKey {
 	return undef if ref($style) ne 'HASH';
 	my $models = $style->{'models'};
 	return undef if ref($models) ne 'ARRAY' || ref($style->{'items'}) ne 'ARRAY' || !defined($style->{'name'}) || $style->{'name'} eq '';
+	# A non-string element would still sort (Perl stringifies refs via cmp)
+	# but produce a different, memory-address-dependent key on every run.
+	for my $model (@$models) {
+		return undef if ref($model) || !defined($model);
+	}
 	my @sortedModels = sort { $a cmp $b } @$models;
 	# No models means "not restricted to specific devices" - matches the
 	# pre-existing convention (ImportStyle.pm/StyleSettings.pm both only
