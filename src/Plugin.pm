@@ -460,9 +460,9 @@ sub getStyles {
 			$log->error("Unable to get online styles");
 		}
 	}
-	if($prefs->get("styles")) {
+	my $localStyles = $prefs->get("styles");
+	if(ref($localStyles) eq 'HASH') {
 		$log->debug("Got locally saved styles");
-		my $localStyles = $prefs->get("styles");
 		for my $key (keys %$localStyles) {
 			my $style = $localStyles->{$key};
 			# Validate at this single central merge point (same validator
@@ -477,6 +477,8 @@ sub getStyles {
 			$styles->{$key} = $style;
 			$localKeys->{$key} = 1;
 		}
+	}elsif(defined($localStyles)) {
+		$log->error("Ignoring corrupt 'styles' preference - expected a HASH, got: ".(ref($localStyles) || 'a plain scalar'));
 	}
 	$log->debug("GOT: ".Dumper($styles));
 	return wantarray ? ($styles, $onlineOk, $localKeys) : $styles;
