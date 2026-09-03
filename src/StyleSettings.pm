@@ -1070,7 +1070,7 @@ sub saveHandler {
 								# No transparency by default
 								# add 0x prefix
 								$params->{'itemproperty_'.$propertyId} = "0x".$value."ff";
-							}elsif($value !~ /^(?:white|lightgray|gray|darkgray|black|lightred|red|darkred|lightyellow|yellow|darkyellow|lightblue|blue|darkblue|lightgreen|green|darkgreen)$/i) {
+							}elsif($value ne "" && $value !~ /^(?:white|lightgray|gray|darkgray|black|lightred|red|darkred|lightyellow|yellow|darkyellow|lightblue|blue|darkblue|lightgreen|green|darkgreen)$/i) {
 								$log->warn("Invalid color: $value");
 								$params->{'itemproperty_'.$propertyId} = "";
 							}
