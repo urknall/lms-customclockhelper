@@ -90,6 +90,7 @@ sub initPlugin
 {
 	my $class = shift;
 	$class->SUPER::initPlugin(@_);
+	_migrateLocalStyleKeysToCanonical();
 	Plugins::CustomClockHelper::ImportStyle->new($class);
 	Plugins::CustomClockHelper::StyleSettings->new($class);
 	Plugins::CustomClockHelper::Settings->new($class);
@@ -367,7 +368,43 @@ sub getStyleKey {
 	my $models = $style->{'models'};
 	return undef if ref($models) ne 'ARRAY' || ref($style->{'items'}) ne 'ARRAY' || !defined($style->{'name'}) || $style->{'name'} eq '';
 	my @sortedModels = sort { $a cmp $b } @$models;
-	return $style->{'name'}." - ".join(',',@sortedModels);
+	# No models means "not restricted to specific devices" - matches the
+	# pre-existing convention (ImportStyle.pm/StyleSettings.pm both only
+	# appended " - <models>" when there was at least one model), so keep
+	# a bare name here too rather than a trailing " - " with nothing after.
+	return @sortedModels ? $style->{'name'}." - ".join(',',@sortedModels) : $style->{'name'};
+}
+
+# One-time startup migration: older saves (or ones made before this fix)
+# may be stored under a non-canonical key (ImportStyle.pm used to
+# concatenate models in JSON/checkbox order instead of getStyleKey()'s
+# alphabetical order). A mismatched key breaks StyleSettings.pm's next
+# lookup ("Unable to update missing or invalid style"), since it looks
+# a style up by its current getStyleKey() value. Renames any local style
+# whose stored key doesn't match getStyleKey(style) to the canonical key.
+sub _migrateLocalStyleKeysToCanonical {
+	my $localStyles = $prefs->get("styles");
+	return if !$localStyles || ref($localStyles) ne 'HASH';
+
+	my $newStyles = {};
+	my $changed = 0;
+	for my $key (sort keys %$localStyles) {
+		my $style = $localStyles->{$key};
+		my $canonicalKey = getStyleKey($style);
+		if(!defined($canonicalKey) || $canonicalKey eq $key) {
+			$newStyles->{$key} = $style;
+			next;
+		}
+		if(exists $newStyles->{$canonicalKey}) {
+			$log->error("Style key migration: '$key' and an existing entry both map to canonical key '$canonicalKey' - keeping the existing one, dropping '$key'");
+			$changed = 1;
+			next;
+		}
+		$log->info("Migrating local style key '$key' to canonical form '$canonicalKey'");
+		$newStyles->{$canonicalKey} = $style;
+		$changed = 1;
+	}
+	$prefs->set("styles", $newStyles) if $changed;
 }
 
 sub getStyles {
@@ -376,6 +413,9 @@ sub getStyles {
 	$log->debug("Getting downloaded styles");
 
 	my $styles = {};
+	# Keys of styles sourced from local prefs -- unlike the online fetch,
+	# this enumeration never fails, so it's always complete/authoritative.
+	my $localKeys = {};
 	# True unless an online fetch was attempted and failed -- lets callers
 	# that build deletion-reconciliation notifications know whether this
 	# snapshot is actually authoritative for online styles.
@@ -425,19 +465,23 @@ sub getStyles {
 		my $localStyles = $prefs->get("styles");
 		for my $key (keys %$localStyles) {
 			$styles->{$key} = $localStyles->{$key};
+			$localKeys->{$key} = 1;
 		}
 	}
 	$log->debug("GOT: ".Dumper($styles));
-	return wantarray ? ($styles, $onlineOk) : $styles;
+	return wantarray ? ($styles, $onlineOk, $localKeys) : $styles;
 }
 
 # Annotates a style hash with its stable identity (name + sorted models,
 # same format as getStyleKey()) so JiveLite can distinguish style variants
 # that share a display name but support different models, instead of
-# reconciling by name alone.
+# reconciling by name alone. `source` tells the applet whether this entry
+# is always fully enumerated (local, unaffected by online-fetch failures)
+# or only conditionally so (online), so it can still reconcile a deleted/
+# renamed LOCAL style even when the online catalog snapshot is incomplete.
 sub _withStyleId {
-	my ($key, $style) = @_;
-	return { %$style, styleid => $key };
+	my ($key, $style, $isLocal) = @_;
+	return { %$style, styleid => $key, source => ($isLocal ? 'local' : 'online') };
 }
 
 sub getStyle {
@@ -469,10 +513,10 @@ sub setStyle {
 	# above is only for persisting the edit -- using it here too would make
 	# every local edit look like every online style was deleted, since
 	# online styles never appear in the local-only set.
-	my ($notifyStyles, $onlineOk) = getStyles();
+	my ($notifyStyles, $onlineOk, $localKeys) = getStyles();
 	my @stylesArray = ();
 	for my $style (keys %$notifyStyles) {
-		push @stylesArray,_withStyleId($style,$notifyStyles->{$style})
+		push @stylesArray,_withStyleId($style,$notifyStyles->{$style},exists($localKeys->{$style}))
 	}
 	# The 3rd element tells the applet whether this snapshot is authoritative
 	# for online styles (i.e. safe to use for deletion reconciliation) -- a
@@ -494,10 +538,10 @@ sub renameAndSetStyle {
 
 	# See setStyle() above: notify with the merged (online + local) catalog,
 	# not the local-only set used to persist the rename.
-	my ($notifyStyles, $onlineOk) = getStyles();
+	my ($notifyStyles, $onlineOk, $localKeys) = getStyles();
 	my @stylesArray = ();
 	for my $style (keys %$notifyStyles) {
-		push @stylesArray,_withStyleId($style,$notifyStyles->{$style})
+		push @stylesArray,_withStyleId($style,$notifyStyles->{$style},exists($localKeys->{$style}))
 	}
 	Slim::Control::Request::notifyFromArray(undef,['customclockchangedstyles',\@stylesArray,$onlineOk?1:0]);
 }
@@ -505,11 +549,11 @@ sub renameAndSetStyle {
 sub getClockStyles {
 	my $request = shift;
 
-	my $styles = getStyles();
+	my ($styles, $onlineOk, $localKeys) = getStyles();
 
 	my @stylesArray = ();
 	for my $style (keys %$styles) {
-		push @stylesArray,_withStyleId($style,$styles->{$style})
+		push @stylesArray,_withStyleId($style,$styles->{$style},exists($localKeys->{$style}))
 	}
 	$request->addResult('item_loop', \@stylesArray);
 	$request->setStatusDone();

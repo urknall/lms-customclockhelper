@@ -1028,21 +1028,9 @@ sub saveHandler {
 	my $styleName = $params->{'style'};
 	my $oldStyleName = $styleName;
 	my $name = $params->{'property_name'};
-	my $models = "";
-	foreach my $model (qw(controller radio touch jivelite800x480 jivelite720x1280)) {
-		if($params->{'property_models_'.$model}) {
-			if($models ne "") {
-				$models.=",";
-			}
-			$models.=$model;
-		}
-	}
-	if($models ne "") {
-		$styleName = $name." - ".$models;
-	}
 	if($params->{'delete'}) {
 		Plugins::CustomClockHelper::Plugin->setStyle($client,$oldStyleName);
-	}elsif($name && $styleName) {
+	}elsif($name) {
 		my $itemId = $params->{'pluginCustomClockHelperStyleItemNo'};
 		my $oldStyle = Plugins::CustomClockHelper::Plugin->getStyle($oldStyleName);
 		if(defined($oldStyleName) && (!ref($oldStyle) || ref($oldStyle->{'items'}) ne 'ARRAY')) {
@@ -1122,6 +1110,18 @@ sub saveHandler {
 			}
 			my $models = $style->{'models'};
 			@$models = sort { $a cmp $b } @$models;
+		}
+		# Use the same canonical key builder as everywhere else instead of
+		# a hand-built "name - fixed-checkbox-order" string, which can
+		# diverge from getStyleKey()'s alphabetical order and break the
+		# lookup above on the next save. Falls back to the unchanged
+		# $oldStyleName when getStyleKey() can't build one yet (a per-item
+		# save only submits itemproperty_* fields, so $style has no
+		# name/models of its own here - that's fine, item saves never
+		# rename anyway).
+		my $canonicalStyleName = Plugins::CustomClockHelper::Plugin::getStyleKey($style);
+		if(defined($canonicalStyleName)) {
+			$styleName = $canonicalStyleName;
 		}
 		if($oldStyleName && $styleName ne $oldStyleName) {
 			Plugins::CustomClockHelper::Plugin->renameAndSetStyle($client,$oldStyleName,$styleName,$style);

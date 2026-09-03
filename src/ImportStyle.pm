@@ -113,18 +113,12 @@ sub saveHandler {
 			}
 		}
 		if(ref($style) eq 'HASH' && defined($style->{'name'}) && $style->{'name'} ne '' && ref($style->{'models'}) eq 'ARRAY' && $validItems) {
-			my $modelsString = "";
-			my $models = $style->{'models'};
-			for my $model (@$models) {
-				if($modelsString ne "") {
-					$modelsString.=",";
-				}
-				$modelsString.=$model;
-			}
-			my $styleName = $style->{'name'};
-			if($modelsString ne "") {
-				$styleName = $styleName." - ".$modelsString;
-			}
+			# Use the same canonical key builder as everywhere else
+			# (getStyleKey - sorts models alphabetically) instead of
+			# concatenating models in whatever order the source JSON used -
+			# a mismatched key here breaks later lookups by StyleSettings.pm
+			# (which populates its "current style" field via getStyleKey()).
+			my $styleName = Plugins::CustomClockHelper::Plugin::getStyleKey($style) // $style->{'name'};
 			Plugins::CustomClockHelper::Plugin->setStyle($client,$styleName,$style);
 			return $style;	
 		}
